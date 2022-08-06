@@ -1,5 +1,7 @@
 const { Client, Location, List, Buttons, LocalAuth } = require('./index');
 const StripCTRL = require('./controllers/stripe.controller');
+const qrcode = require('qrcode-terminal');
+
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -10,7 +12,9 @@ const client = new Client({
 });
 
 client.initialize();
-
+client.on('qr', qr => {
+    qrcode.generate(qr, {small: true});
+});
 client.on('qr', (qr) => {
     // NOTE: This event will not be fired if a session is specified.
     console.log('QR RECEIVED', qr);

@@ -1,4 +1,4 @@
-const { Client, Location, List, Buttons, LocalAuth} = require('./index');
+const { Client, Location, List, Buttons, LocalAuth } = require('./index');
 const StripCTRL = require('./controllers/stripe.controller');
 
 const client = new Client({
@@ -25,8 +25,44 @@ client.on('auth_failure', msg => {
 client.on('ready', () => {
     console.log('READY');
 });
+const nonGuestList = []
+const menus = [
+    {
+        title: "Home",
+        logo: '🏠',
+        key: "home"
+    },
+    {
+        title: "Payment",
+        logo: '💲',
+        key: "payment"
+    },
+    {
+        title: "Register",
+        logo: '🧾',
+        key: "register"
+    },
+    {
+        title: "Contact Us",
+        logo: '🏪',
+        key: "contact"
+    },
+    {
+        title: "System Info",
+        logo: 'ℹ️',
+        key: "sysinfo"
+    },
+
+]
 
 client.on('message', async msg => {
+    let phone = msg.from.split('@')[0]
+    if (!nonGuestList.includes(phone)) {
+        let wlcMsg = `Hello!! ${msg.notifyName}💛💛.\nWelcome to DDLD Sandbox\nMy name is Alfred an autonomous butler..\nType the keyword: \n-"Home" for Main Menu\n-"!q" to quit`
+        client.sendMessage(msg.from, wlcMsg);
+        nonGuestList.push(phone)
+        return
+    }
     console.log('MESSAGE RECEIVED', msg.body);
 
     if (msg.body === '!ping reply') {
@@ -37,7 +73,15 @@ client.on('message', async msg => {
         // Send a new message to the same chat
         client.sendMessage(msg.from, 'pong');
 
-    }else if (msg.body=="paymentlink") {
+    } else if (msg.body === '!menu') {
+        let menustr = ``
+        menus.map((menu, index) => {
+            let str = `${index + 1}. ${menu.title} ${menu.logo}\n\n`
+            menustr = menustr + str
+        })
+        client.sendMessage(msg.from, menustr);
+
+    } else if (msg.body == 'paymentlink') {
         const res = await StripCTRL.getPaymentLink()
         console.log(res.paymentLink)
         client.sendMessage(msg.from, res.paymentLink.url);
@@ -191,11 +235,13 @@ client.on('message', async msg => {
             client.interface.openChatWindowAt(quotedMsg.id._serialized);
         }
     } else if (msg.body === '!buttons') {
-        let button = new Buttons('Button body',[{body:'bt1'},{body:'bt2'},{body:'bt3'}],'title','footer');
+      //  let button = new Buttons('Button body', [{ body: 'bt1' }, { body: 'bt2' }, { body: 'bt3' }], 'title', 'footer');
+      let button = new Buttons('body',[{ body: 'btn' }],);
+      console.log(button)
         client.sendMessage(msg.from, button);
     } else if (msg.body === '!list') {
-        let sections = [{title:'sectionTitle',rows:[{title:'ListItem1', description: 'desc'},{title:'ListItem2'}]}];
-        let list = new List('List body','btnText',sections,'Title','footer');
+        let sections = [{ title: 'sectionTitle', rows: [{ title: 'ListItem1', description: 'desc' }, { title: 'ListItem2' }] }];
+        let list = new List('List body', 'btnText', sections, 'Title', 'footer');
         client.sendMessage(msg.from, list);
     } else if (msg.body === '!reaction') {
         msg.react('👍');
@@ -233,7 +279,7 @@ client.on('message_ack', (msg, ack) => {
         ACK_PLAYED: 4
     */
 
-    if(ack == 3) {
+    if (ack == 3) {
         // The message was read
     }
 });
@@ -256,7 +302,7 @@ client.on('group_update', (notification) => {
 });
 
 client.on('change_state', state => {
-    console.log('CHANGE STATE', state );
+    console.log('CHANGE STATE', state);
 });
 
 client.on('disconnected', (reason) => {
